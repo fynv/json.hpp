@@ -147,7 +147,172 @@ namespace Json
 		ltrim(s);
 	}
 
-	inline std::string Strigify(SPToken token, int indent = 0)
+	inline int _utf8_to_unicode(const char*& p8)
+	{
+		int c1 = (int)*(p8++) & 0xFF;
+		int u = 0;
+
+		int kind = (int)c1 >> 4;
+		if (kind < 0x8) // ascii 7 bit
+		{
+			u = c1;
+		}
+		else
+		{
+			int c2 = (int) * (p8++) & 0xFF;
+			if (kind < 0xe) // 5+6=11 bit
+				u = ((c1 & 0x1F) << 6) | (c2 & 0x3F);
+			else
+			{
+				int c3 = (int) * (p8++) & 0xFF;
+				if (kind < 0xf) // BMP 4 + 6 + 6 = 16bit
+					u = ((c1 & 0x0F) << 12) | ((c2 & 0x3F) << 6) | (c3 & 0x3F);
+				else // 3 + 6 +6 +6 = 21bit 
+				{
+					int c4 = (int) * (p8++) & 0xFF;
+					u = ((c1 & 0x07) << 18) | ((c2 & 0x3F) << 12) | ((c3 & 0x3F) << 6) | (c4 & 0x3F);
+				}
+			}
+		}
+		return u;
+	}
+
+	inline std::vector<int> _decode_utf8(const char* str)
+	{
+		std::vector<int> ret;
+		const char* p8 = str;
+		while (*p8 != 0)
+		{
+			int code= _utf8_to_unicode(p8);
+			ret.push_back(code);
+		}
+		return ret;
+	}
+
+	inline std::string _utf8_from_unicode(int code)
+	{
+		std::string s;
+		int c1;
+		if (code < 0x80)
+		{
+			c1 = code;
+		}
+		else
+		{
+			c1 = (code & 0x3F) | 0x80; code >>= 6;
+			int c2;
+			if (code < 0x20)
+				c2 = code | 0xC0;
+			else
+			{
+				c2 = (code & 0x3F) | 0x80; code >>= 6;
+				int c3;
+				if (code < 0x10)
+				{
+					c3 = code | 0xE0;
+				}
+				else
+				{
+					c3 = (code & 0x3F) | 0x80; code >>= 6;
+					int c4;
+					c4 = (code & 0x07) | 0xF0;
+					s += (char)c4;
+				}
+				s += (char)c3;
+			}
+			s += (char)c2;
+		}
+		s += (char)c1;
+		return s;
+	}
+
+	inline std::string escape(const std::string& s, bool escape_unicode)
+	{
+		std::vector<int> unicode = _decode_utf8(s.c_str());
+
+		static std::unordered_map<int, std::string> escape_map = {
+			{ '\"', "\\\""},
+			{ '\\', "\\\\"},
+			{ '\b', "\\b"},
+			{ '\f', "\\f"},
+			{ '\n', "\\n"},
+			{ '\r', "\\r"},
+			{ '\t', "\\t"},
+		};
+
+
+		std::string ret;
+		for (size_t i = 0; i < unicode.size(); i++)
+		{
+			int code = unicode[i];
+			auto iter = escape_map.find(code);
+			if (iter != escape_map.end())
+			{
+				ret += iter->second;
+				continue;
+			}
+
+			if (code < 32 || (escape_unicode && code > 127))
+			{
+				char buf[7];
+				sprintf(buf, "\\u%04X", code);
+				ret += buf;				
+				continue;
+			}			
+			ret += _utf8_from_unicode(code);
+		}
+		return ret;
+	}	
+
+	inline std::string unescape(const std::string& s)
+	{
+		static std::unordered_map<char, char> unescape_map = {
+			{ '\"', '\"'},
+			{ '\\', '\\'},
+			{ '/', '/'},
+			{ 'b', '\b'},
+			{ 'f', '\f'},
+			{ 'n', '\n'},
+			{ 'r', '\r'},
+			{ 't', '\t'},
+		};
+
+		std::string ret;
+		for (size_t i = 0; i < s.size(); i++)
+		{
+			char c = s[i];
+			if (c == '\\')
+			{
+				i++;
+				if (i >= s.size()) break;
+				c = s[i];
+				if (c == 'u')
+				{
+					i++;
+					if (i + 3 >= s.size()) break;
+					char buf[5];
+					memcpy(buf, s.c_str() + i, 4);
+					buf[4] = 0;
+					int code = 0;
+					sscanf(buf, "%X", &code);					
+					ret += _utf8_from_unicode(code);
+					i += 3;
+					continue;
+				}
+				auto iter = unescape_map.find(c);
+				if (iter != unescape_map.end())
+				{
+					ret += iter->second;
+					continue;
+				}
+			}
+			ret += c;
+		}
+
+		return ret;
+	}
+
+	inline std::string Strigify(SPToken token, bool escape_unicode = false, int indent = 0)
 	{
 		if (token == nullptr)
 		{
@@ -175,9 +340,8 @@ namespace Json
 		{
 			String* t = dynamic_cast<String*>(token.get());
 			if (t != nullptr)
-			{
-				// TODO: need escape here
-				return std::string("\"") + t->value() + "\"";
+			{				
+				return std::string("\"") + escape(t->value(), escape_unicode) + "\"";
 			}
 		}
 
@@ -194,7 +358,7 @@ namespace Json
 					{
 						str += "\t";
 					}
-					str += Strigify(arr[i], indent);
+					str += Strigify(arr[i], escape_unicode, indent);
 					if (i < arr.size() - 1)
 					{
 						str += ",\n";
@@ -224,12 +388,10 @@ namespace Json
 					for (int j = 0; j < indent; j++)
 					{
 						str += "\t";
-					}
+					}					
 					
-					// TODO: need escape here
-					str += std::string("\"") + iter->first + "\": ";
-
-					str += Strigify(iter->second, indent);					
+					str += std::string("\"") + escape(iter->first, escape_unicode) + "\": ";
+					str += Strigify(iter->second, escape_unicode, indent);
 					iter++;
 					if (iter != obj.end())
 					{
@@ -269,8 +431,8 @@ namespace Json
 		if (s[0] == '\"')
 		{
 			std::string sub = s.substr(1, s.length() - 2);
-			// TODO: need unescape here
-			return String::New(sub.c_str());
+			std::string str = unescape(sub);			
+			return String::New(str.c_str());
 		}
 
 		if (s[0] == '[')
@@ -405,9 +567,8 @@ namespace Json
 					key_len = key_end - key_start;
 				}
 
-				std::string key = sub.substr(key_start, key_len);
-				// TODO: need unescape here
-
+				std::string str = sub.substr(key_start, key_len);
+				std::string key = unescape(str);
 				std::string value = sub.substr(value_start);								
 				(*obj)[key] = Parse(value.c_str());
 

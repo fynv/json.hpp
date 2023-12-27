@@ -5,7 +5,7 @@ using namespace Json;
 
 int main()
 {
-	auto s = String::New("Hello World");
+	auto s = String::New("Hello\t World\n");
 	auto a = Array::New();
 	*a = { Number::New(10.0), Number::New(20.0), Number::New(30.0) };
 
