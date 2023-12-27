@@ -422,9 +422,6 @@ namespace Json
 		std::string s = str;
 		trim(s);
 
-		printf("%s\n", s.c_str());
-
-
 		if (s.length() < 1)
 		{
 			return nullptr;
