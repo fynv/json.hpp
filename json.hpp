@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 #include <list>
-#include <functional>
 #include <unordered_map>
 #include <cstring>
 #include <cstdio>
