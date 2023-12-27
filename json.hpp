@@ -47,22 +47,7 @@ namespace DataModel
 	};
 	typedef std::shared_ptr<Token> SPToken;
 
-	template <typename T>
-	class TTokenPtr : public std::shared_ptr<TToken<T>>
-	{
-	public:
-		using std::shared_ptr<TToken<T>>::shared_ptr;
-
-		T& operator*() const
-		{
-			return std::shared_ptr<TToken<T>>::get()->value();
-		}
-
-		T* operator->() const
-		{
-			return &std::shared_ptr<TToken<T>>::get()->value();
-		}
-	};
+	template <typename T> class TTokenPtr;
 
 	template<typename T>
 	class TToken : public Token
@@ -88,6 +73,23 @@ namespace DataModel
 		TToken(T&& v) : m_value(v)
 		{
 
+		}
+	};
+
+	template <typename T>
+	class TTokenPtr : public std::shared_ptr<TToken<T>>
+	{
+	public:
+		using std::shared_ptr<TToken<T>>::shared_ptr;
+
+		T& operator*() const
+		{
+			return std::shared_ptr<TToken<T>>::get()->value();
+		}
+
+		T* operator->() const
+		{
+			return &std::shared_ptr<TToken<T>>::get()->value();
 		}
 	};
 
