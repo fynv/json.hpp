@@ -44,8 +44,7 @@ namespace DataModel
 	protected:
 		Token(){}
 		virtual ~Token(){}
-	};
-	typedef std::shared_ptr<Token> SPToken;
+	};	
 
 	template <typename T> class TTokenPtr;
 
@@ -91,6 +90,60 @@ namespace DataModel
 		{
 			return &std::shared_ptr<TToken<T>>::get()->value();
 		}
+	};
+
+	class SPToken : public std::shared_ptr<Token>
+	{
+	public:
+		using std::shared_ptr<Token>::shared_ptr;
+
+		SPToken()
+		{
+		}
+
+		SPToken(double&& v)
+			: std::shared_ptr<Token>(TToken<double>::New(double(v)))
+		{
+		}
+
+		SPToken(bool&& v)
+			: std::shared_ptr<Token>(TToken<bool>::New(bool(v)))
+		{
+		}
+
+		SPToken(std::string&& v)
+			: std::shared_ptr<Token>(TToken<std::string>::New(std::string(v)))
+		{
+
+		}
+
+		SPToken(const char* v)
+			: std::shared_ptr<Token>(TToken<std::string>::New(std::string(v)))
+		{
+		}
+
+		SPToken(std::initializer_list<SPToken> v)
+			: std::shared_ptr<Token>(TToken<std::vector<SPToken>>::New(std::vector<SPToken>(v)))
+		{
+		}
+
+		SPToken(std::vector<SPToken>&& v)
+			: std::shared_ptr<Token>(TToken<std::vector<SPToken>>::New(std::vector<SPToken>(v)))
+		{
+
+		}
+
+		SPToken(std::initializer_list<std::pair<const std::string, SPToken>> v)
+			: std::shared_ptr<Token>(TToken<std::unordered_map<std::string, SPToken>>::New(std::unordered_map<std::string, SPToken>(v)))
+		{
+		}
+
+		SPToken(std::unordered_map<std::string, SPToken>&& v)
+			: std::shared_ptr<Token>(TToken<std::unordered_map<std::string, SPToken>>::New(std::unordered_map<std::string, SPToken>(v)))
+		{
+
+		}
+
 	};
 
 	typedef double NumberT;

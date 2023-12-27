@@ -6,11 +6,11 @@ using namespace Json;
 int main()
 {	
 	auto obj = Object::New({
-		{"title", String::New("Hello\t World\n 天地")},
-		{"list", Array::New({ 
-			Number::New(10.0), 
-			Number::New(20.0), 
-			Number::New(30.0) 
+		{"title", "Hello\t World\n 天地"},
+		{"list", { 10.0, 20.0, 30.0 }},
+		{"obj", ObjectT({
+			{ "item1", 10.0},
+			{ "item2", "cheers!"}
 		})}
 	});
 
