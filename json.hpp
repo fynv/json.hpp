@@ -422,6 +422,8 @@ namespace Json
 		std::string s = str;
 		trim(s);
 
+		printf("%s\n", s.c_str());
+
 
 		if (s.length() < 1)
 		{
@@ -489,7 +491,7 @@ namespace Json
 			std::string inside = s.substr(1, s.length() - 2);
 			std::list<char> stack;
 			int start = 0;
-			int end = start + 1;
+			int end = start;
 			for (; end <= inside.length(); end++)
 			{
 				if (end < inside.length())
@@ -499,14 +501,14 @@ namespace Json
 					{
 						char c_top = stack.front();
 						if (c == match_list[c_top])
-						{
+						{							
 							stack.pop_front();
 						}
 						continue;
 					}
 
 					if (c == '\"' || c == '[' || c == '{')
-					{
+					{						
 						stack.push_front(c);
 						continue;
 					}
