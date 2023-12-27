@@ -10,8 +10,10 @@ int main()
 	*a = { Number::New(10.0), Number::New(20.0), Number::New(30.0) };
 
 	auto obj = Object::New();
-	(*obj)["title"] = s;
-	(*obj)["list"] = a;
+	*obj = {
+		{"title", s},
+		{"list", a}
+	};
 
 	auto jsonstr = Strigify(obj, true);
 	auto t = Parse(jsonstr.c_str());
