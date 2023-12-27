@@ -225,7 +225,10 @@ namespace Json
 					{
 						str += "\t";
 					}
+					
+					// TODO: need escape here
 					str += std::string("\"") + iter->first + "\": ";
+
 					str += Strigify(iter->second, indent);					
 					iter++;
 					if (iter != obj.end())
@@ -357,32 +360,57 @@ namespace Json
 				}
 
 				std::string sub = inside.substr(start, end - start);
-				size_t mid = sub.find(':', 0);
-				if (mid == std::string::npos)
+
+				int qcount = 0;
+				size_t key_start = 0;
+				size_t key_end = std::string::npos;
+				size_t value_start = std::string::npos;
+				for (size_t i = 0; i < sub.size(); i++)
 				{
-					if (sub.length() > 1 && sub[0] == '\"')
+					char c = sub[i];
+					if (c == '\\')
 					{
-						(*obj)[sub.substr(1, sub.length() - 2)] = nullptr;
+						i++;
+						continue;
 					}
-					else
+
+					if (c == '\"')
 					{
-						(*obj)[sub] = nullptr;
+						if (qcount == 0)
+						{
+							key_start = i + 1;
+						}
+						else if (qcount == 1)
+						{
+							key_end = i;
+						}
+						qcount++;
+						continue;
 					}
+
+					if (qcount == 2 && c == ':')
+					{
+						value_start = i + 1;
+						break;
+					}
+				}
+
+				size_t key_len;
+				if (key_end == std::string::npos)
+				{
+					key_len = sub.length() - key_start;
 				}
 				else
 				{
-					std::string key_s = sub.substr(0, mid);
-					trim(key_s);
-					std::string value = sub.substr(mid + 1);
-					if (key_s.length() > 1 && key_s[0] == '\"')
-					{
-						(*obj)[key_s.substr(1, key_s.length() - 2)] = Parse(value.c_str());
-					}
-					else
-					{
-						(*obj)[key_s] = Parse(value.c_str());
-					}
+					key_len = key_end - key_start;
 				}
+
+				std::string key = sub.substr(key_start, key_len);
+				// TODO: need unescape here
+
+				std::string value = sub.substr(value_start);								
+				(*obj)[key] = Parse(value.c_str());
+
 				start = end + 1;
 				end = start;
 			}
