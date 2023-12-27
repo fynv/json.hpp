@@ -16,7 +16,7 @@ int main()
 
 	auto jsonstr = Strigify(obj, true);
 	auto t = Parse(jsonstr.c_str());
-	jsonstr = Strigify(t, true);
+	jsonstr = Strigify(t);
 	
 	FILE* fp = fopen("test.json", "w");
 	fprintf(fp, "%s\n", jsonstr.c_str());

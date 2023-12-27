@@ -290,15 +290,12 @@ namespace Json
 				c = s[i];
 				if (c == 'u')
 				{
-					i++;
-					if (i + 3 >= s.size()) break;
-					char buf[5];
-					memcpy(buf, s.c_str() + i, 4);
-					buf[4] = 0;
+					if (i + 4 > s.size()) break;
+					std::string uc4 = s.substr(i + 1, 4);
 					int code = 0;
-					sscanf(buf, "%X", &code);					
+					sscanf(uc4.c_str(), "%X", &code);
 					ret += _utf8_from_unicode(code);
-					i += 3;
+					i += 4;
 					continue;
 				}
 				auto iter = unescape_map.find(c);
