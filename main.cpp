@@ -9,7 +9,8 @@ int main()
 		{"title", "Hello\t World\n 天地"},
 		{"list", { 10.0, 20.0, 30.0 }},
 		{"obj", ObjectT({
-			{ "item1", 10.0},
+			{ "item0", nullptr },
+			{ "item1", true },
 			{ "item2", "cheers!"}
 		})}
 	});

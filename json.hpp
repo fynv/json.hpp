@@ -46,6 +46,8 @@ namespace DataModel
 		virtual ~Token(){}
 	};	
 
+	typedef std::shared_ptr<Token> TokenPtr;
+
 	template <typename T> class TTokenPtr;
 
 	template<typename T>
@@ -53,6 +55,11 @@ namespace DataModel
 	{
 	public:
 		static TTokenPtr<T> New(T&& v = T())
+		{
+			return TTokenPtr<T>(new TToken<T>(T(v)));
+		}
+
+		static TTokenPtr<T> New(const T& v)
 		{
 			return TTokenPtr<T>(new TToken<T>(T(v)));
 		}
@@ -92,76 +99,6 @@ namespace DataModel
 		}
 	};
 
-	class SPToken : public std::shared_ptr<Token>
-	{
-	public:
-		using std::shared_ptr<Token>::shared_ptr;
-
-		SPToken()
-		{
-		}
-
-		SPToken(double&& v)
-			: std::shared_ptr<Token>(TToken<double>::New(double(v)))
-		{
-		}
-
-		SPToken(bool&& v)
-			: std::shared_ptr<Token>(TToken<bool>::New(bool(v)))
-		{
-		}
-
-		SPToken(std::string&& v)
-			: std::shared_ptr<Token>(TToken<std::string>::New(std::string(v)))
-		{
-
-		}
-
-		SPToken(const char* v)
-			: std::shared_ptr<Token>(TToken<std::string>::New(std::string(v)))
-		{
-		}
-
-		SPToken(std::initializer_list<SPToken> v)
-			: std::shared_ptr<Token>(TToken<std::vector<SPToken>>::New(std::vector<SPToken>(v)))
-		{
-		}
-
-		SPToken(std::vector<SPToken>&& v)
-			: std::shared_ptr<Token>(TToken<std::vector<SPToken>>::New(std::vector<SPToken>(v)))
-		{
-
-		}
-
-		SPToken(std::initializer_list<std::pair<const std::string, SPToken>> v)
-			: std::shared_ptr<Token>(TToken<std::unordered_map<std::string, SPToken>>::New(std::unordered_map<std::string, SPToken>(v)))
-		{
-		}
-
-		SPToken(std::unordered_map<std::string, SPToken>&& v)
-			: std::shared_ptr<Token>(TToken<std::unordered_map<std::string, SPToken>>::New(std::unordered_map<std::string, SPToken>(v)))
-		{
-
-		}
-
-	};
-
-	typedef double NumberT;
-	typedef TToken<NumberT> Number;
-	typedef TTokenPtr<NumberT> SPNumber;
-	typedef bool BooleanT;
-	typedef TToken<BooleanT> Boolean;
-	typedef TTokenPtr<BooleanT> SPBoolean;
-	typedef std::string StringT;
-	typedef TToken<StringT> String;
-	typedef TTokenPtr<StringT> SPString;
-	typedef std::vector<SPToken> ArrayT;
-	typedef TToken<ArrayT> Array;
-	typedef TTokenPtr<ArrayT> SPArray;
-	typedef std::unordered_map<std::string, SPToken> ObjectT;
-	typedef TToken<ObjectT> Object;
-	typedef TTokenPtr<ObjectT> SPObject;
-
 	// for extensions, not used
 	class Wrapper : public Token
 	{
@@ -184,6 +121,59 @@ namespace DataModel
 namespace Json
 {
 	using namespace DataModel;
+
+	class SPToken : public TokenPtr
+	{
+	public:
+		using TokenPtr::TokenPtr;
+
+		SPToken()
+		{
+		}
+
+		SPToken(double v)
+			: TokenPtr(TToken<double>::New(v))
+		{
+		}
+
+		SPToken(bool v)
+			: TokenPtr(TToken<bool>::New(v))
+		{
+		}
+
+		SPToken(const char* v)
+			: TokenPtr(TToken<std::string>::New(v))
+		{
+		}
+
+		SPToken(std::initializer_list<SPToken> v)
+			: TokenPtr(TToken<std::vector<SPToken>>::New(v))
+		{
+		}
+
+		SPToken(std::unordered_map<std::string, SPToken>&& v)
+			: TokenPtr(TToken<std::unordered_map<std::string, SPToken>>::New(v))
+		{
+
+		}
+
+	};
+
+	typedef double NumberT;
+	typedef TToken<NumberT> Number;
+	typedef TTokenPtr<NumberT> SPNumber;
+	typedef bool BooleanT;
+	typedef TToken<BooleanT> Boolean;
+	typedef TTokenPtr<BooleanT> SPBoolean;
+	typedef std::string StringT;
+	typedef TToken<StringT> String;
+	typedef TTokenPtr<StringT> SPString;
+	typedef std::vector<SPToken> ArrayT;
+	typedef TToken<ArrayT> Array;
+	typedef TTokenPtr<ArrayT> SPArray;
+	typedef std::unordered_map<std::string, SPToken> ObjectT;
+	typedef TToken<ObjectT> Object;
+	typedef TTokenPtr<ObjectT> SPObject;
 
 	inline void ltrim(std::string& s) {
 		s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
@@ -344,9 +334,8 @@ namespace Json
 				if (c == 'u')
 				{
 					if (i + 4 > s.size()) break;
-					std::string uc4 = s.substr(i + 1, 4);
-					int code = 0;
-					sscanf(uc4.c_str(), "%X", &code);
+					std::string uc4 = s.substr(i + 1, 4);					
+					int code = std::stoi(uc4, nullptr, 16);
 					ret += _utf8_from_unicode(code);
 					i += 4;
 					continue;
@@ -481,9 +470,8 @@ namespace Json
 
 		if (s[0] == '\"')
 		{
-			std::string sub = s.substr(1, s.length() - 2);
-			std::string str = unescape(sub);			
-			return String::New(str.c_str());
+			std::string sub = s.substr(1, s.length() - 2);			
+			return String::New(unescape(sub));
 		}
 
 		if (s[0] == '[')
@@ -644,7 +632,7 @@ namespace Json
 			return Boolean::New(false);
 		}
 
-		return Number::New(atof(s.c_str()));
+		return Number::New(std::stof(s));
 	}
 }
 
