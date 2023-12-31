@@ -80,6 +80,11 @@ namespace DataModel
 		{
 
 		}
+
+		TToken(const T& v) : m_value(v)
+		{
+
+		}
 	};
 
 	template <typename T>
