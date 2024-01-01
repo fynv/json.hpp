@@ -13,10 +13,23 @@
 namespace DataModel
 {
 	template<typename T> class TToken;
+	template <typename T> class TTokenPtr;
 
 	class Token
 	{
 	public:
+		template<typename T>
+		static TTokenPtr<T> New(T&& v)
+		{
+			return TToken<T>::New(v);
+		}
+
+		template<typename T>
+		static TTokenPtr<T> New(const T& v)
+		{
+			return TToken<T>::New(v);
+		}
+
 		template<typename T>
 		T& To()
 		{
@@ -47,8 +60,6 @@ namespace DataModel
 	};	
 
 	typedef std::shared_ptr<Token> TokenPtr;
-
-	template <typename T> class TTokenPtr;
 
 	template<typename T>
 	class TToken : public Token
