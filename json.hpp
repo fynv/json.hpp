@@ -104,6 +104,16 @@ namespace DataModel
 	public:
 		using std::shared_ptr<TToken<T>>::shared_ptr;
 
+		TTokenPtr() {}
+
+		TTokenPtr(T&& v) : std::shared_ptr(TToken<T>::New(v))
+		{
+		}
+
+		TTokenPtr(const T& v) : std::shared_ptr(TToken<T>::New(v))
+		{
+		}
+
 		T& operator*() const
 		{
 			return std::shared_ptr<TToken<T>>::get()->value();
