@@ -150,6 +150,11 @@ namespace Json
 		{
 		}
 
+		SPToken(const std::string& v)
+			: TokenPtr(TToken<std::string>::New(v))
+		{
+		}
+
 		SPToken(std::initializer_list<SPToken> v)
 			: TokenPtr(TToken<std::vector<SPToken>>::New(v))
 		{
@@ -518,6 +523,11 @@ namespace Json
 				}
 
 				std::string sub = inside.substr(start, end - start);
+				if (end == inside.length())
+				{
+					trim(sub);
+					if (sub.length() < 1) break;
+				}
 				arr->emplace_back(Parse(sub.c_str()));
 				start = end + 1;
 				end = start;
